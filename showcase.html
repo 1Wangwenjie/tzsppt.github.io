@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>王文杰 · 团支书竞选 | Tech Portfolio</title>
+<style>
+/* ================= 设计 Token（单一事实来源） ================= */
+:root{
+  --g:#C8F247;        /* 荧光绿 */
+  --gl:#E3F7A8;       /* 亮柠 */
+  --gd:#6E8F2E;       /* 暗绿 */
+  --w:#FFFFFF;
+  --gw:#9AA399;       /* 正文灰 */
+  --gs:#626B60;       /* 弱灰 */
+  --bg:#070908;
+  --card:rgba(12,17,14,.72);
+  --card2:rgba(20,27,20,.8);
+  --hair:rgba(156,192,134,.22);
+  --mono:"Consolas","Bahnschrift",monospace;
+  --cn:"Microsoft YaHei","PingFang SC",sans-serif;
+  --ease-overshoot:cubic-bezier(.2,1.12,.32,1);   /* 轻微 overshoot */
+  --ease-soft:cubic-bezier(.25,.8,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--w);font-family:var(--cn);
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--g);color:#0a0d08}
+
+/* ================= 全屏幻灯片容器 ================= */
+.deck{position:fixed;inset:0}
+section{
+  position:absolute;inset:0;height:100%;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:84px 7vw 64px;overflow:hidden;
+  opacity:0;transform:translateY(34px) scale(.985);
+  transition:opacity .55s ease,transform .55s var(--ease-soft);
+  pointer-events:none;z-index:1;
+}
+section.active{opacity:1;transform:none;pointer-events:auto;z-index:2}
+/* 翻页方向动画 */
+section.in-next{animation:slideInNext .6s var(--ease-soft) both;z-index:3}
+section.in-prev{animation:slideInPrev .6s var(--ease-soft) both;z-index:3}
+section.out-next{animation:slideOutNext .6s var(--ease-soft) both;z-index:2}
+section.out-prev{animation:slideOutPrev .6s var(--ease-soft) both;z-index:2}
+@keyframes slideInNext{from{opacity:0;transform:translateX(90px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes slideOutNext{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-90px) scale(.985)}}
+@keyframes slideInPrev{from{opacity:0;transform:translateX(-90px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes slideOutPrev{from{opacity:1;transform:none}to{opacity:0;transform:translateX(90px) scale(.985)}}
+.bg-img{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}
+.bg-img::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 50% 40%,rgba(7,9,8,.15),rgba(7,9,8,.78) 88%)}
+canvas.fx{position:absolute;inset:0;z-index:1;pointer-events:none}
+.wrap{position:relative;z-index:2;width:100%;max-width:1240px;margin:0 auto}
+
+/* ================= 顶部进度条 & 导航 ================= */
+#progress{position:fixed;top:0;left:0;height:2px;width:100%;z-index:100;
+  background:linear-gradient(90deg,var(--gd),var(--g));
+  transform-origin:left;transform:scaleX(0);
+  box-shadow:0 0 12px rgba(200,242,71,.7)}
+#nav{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:99;
+  display:flex;flex-direction:column;gap:14px}
+#nav a{width:8px;height:8px;border-radius:50%;border:1px solid rgba(200,242,71,.55);
+  background:transparent;transition:all .35s var(--ease-overshoot);position:relative}
+#nav a.on{background:var(--g);box-shadow:0 0 10px var(--g);transform:scale(1.5)}
+#nav a:hover::after{content:attr(data-t);position:absolute;right:18px;top:50%;
+  transform:translateY(-50%);font:11px var(--mono);color:var(--gl);white-space:nowrap;
+  letter-spacing:.1em}
+#hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99;
+  font:11px var(--mono);letter-spacing:.28em;color:var(--gs);
+  display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .5s;
+  pointer-events:none}
+#hint .mouse{width:20px;height:32px;border:1.5px solid var(--gs);border-radius:11px;position:relative}
+#hint .mouse::after{content:"";position:absolute;left:50%;top:6px;width:3px;height:7px;
+  margin-left:-1.5px;border-radius:2px;background:var(--g);
+  animation:wheel 1.6s var(--ease-soft) infinite}
+@keyframes wheel{0%{opacity:0;transform:translateY(0)}
+  30%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translateY(10px)}}
+
+/* 全屏按钮 & 页码 & 翻页箭头 */
+.ctl{width:44px;height:44px;border-radius:12px;
+  border:1px solid var(--hair);background:rgba(12,17,14,.72);color:var(--gl);cursor:pointer;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s var(--ease-overshoot)}
+.ctl svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.ctl:hover{border-color:var(--g);color:var(--g);box-shadow:0 0 22px -4px rgba(200,242,71,.55);
+  transform:scale(1.08)}
+#fs{position:fixed;right:24px;bottom:24px;z-index:99}
+#navbtns{position:fixed;right:24px;bottom:80px;z-index:99;display:flex;flex-direction:column;gap:10px}
+#navbtns .ctl{width:44px;height:44px;border-radius:50%}
+/* 屏幕两侧隐形点击区（点击翻页） */
+#tapL,#tapR{position:fixed;top:0;bottom:0;width:14vw;z-index:90;cursor:pointer}
+#tapL{left:0}#tapR{right:0}
+#tapL:hover ~ #tapHintL,#tapR:hover ~ #tapHintR{opacity:.5}
+.tap-hint{position:fixed;top:50%;transform:translateY(-50%);z-index:91;color:var(--g);
+  font-size:34px;opacity:0;pointer-events:none;transition:opacity .25s}
+#tapHintL{left:18px}#tapHintR{right:18px}
+#pager{position:fixed;left:26px;bottom:30px;z-index:99;font:700 13px var(--mono);
+  letter-spacing:.12em;color:var(--gs);background:rgba(12,17,14,.72);
+  padding:9px 16px;border-radius:999px;border:1px solid var(--hair);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:none}
+#pager b{color:var(--gl);font-size:15px}
+
+/* ================= 通用排版 ================= */
+.eyebrow{font:700 12px/1 var(--mono);letter-spacing:.32em;color:var(--gl);
+  text-transform:uppercase;margin-bottom:18px}
+.h-title{font-size:clamp(30px,4.4vw,52px);font-weight:800;letter-spacing:.02em;line-height:1.12}
+.sec-index{position:absolute;top:64px;right:7vw;z-index:2;
+  font:700 13px var(--mono);color:var(--gs);letter-spacing:.2em}
+.g{color:var(--g)}
+.lead{color:var(--gw);font-size:clamp(14px,1.35vw,17px);line-height:1.85}
+.mono{font-family:var(--mono)}
+
+/* ================= 入场动画 ================= */
+.reveal{opacity:0;transform:translateY(42px) scale(.985);
+  transition:opacity .85s var(--ease-soft),transform .85s var(--ease-overshoot);
+  transition-delay:var(--d,0s)}
+section.active .reveal{opacity:1;transform:translateY(0) scale(1)}
+
+/* ================= 玻璃卡片 ================= */
+.card{background:var(--card);border:1px solid var(--hair);border-radius:14px;
+  padding:26px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 0 0 1px rgba(0,0,0,.25),0 18px 50px -22px rgba(0,0,0,.8),
+  0 0 44px -18px rgba(200,242,71,.22);
+  transition:transform .45s var(--ease-overshoot),box-shadow .45s var(--ease-soft),
+  border-color .45s}
+.card:hover{transform:translateY(-6px);border-color:rgba(200,242,71,.55);
+  box-shadow:0 0 0 1px rgba(0,0,0,.25),0 26px 60px -24px rgba(0,0,0,.85),
+  0 0 60px -14px rgba(200,242,71,.4)}
+.accent-card{background:linear-gradient(135deg,#d8f96a,#b7e238);color:#0a0d08;
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 34px -6px rgba(200,242,71,.55)}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;
+  border:1px solid var(--hair);background:rgba(200,242,71,.06);
+  font:600 11px var(--mono);color:var(--gl);letter-spacing:.06em;white-space:nowrap}
+.wm-num{position:absolute;right:18px;top:6px;font:800 52px var(--mono);
+  color:rgba(200,242,71,.07);pointer-events:none;user-select:none}
+.icon-tile{width:42px;height:42px;border-radius:11px;flex:none;
+  background:rgba(200,242,71,.1);border:1px solid rgba(200,242,71,.28);
+  display:flex;align-items:center;justify-content:center;color:var(--g)}
+.icon-tile svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.check li{list-style:none;display:flex;gap:12px;align-items:flex-start;
+  color:#e8ede4;font-size:15px;line-height:1.55;padding:7px 0}
+.check svg{width:17px;height:17px;flex:none;margin-top:3px;stroke:var(--g);
+  fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 6px rgba(200,242,71,.6))}
+
+/* ================= 封面 ================= */
+#cover .hero-name{font-size:clamp(64px,11vw,148px);font-weight:900;letter-spacing:.06em;
+  line-height:1;text-shadow:0 0 60px rgba(200,242,71,.25)}
+#cover .hero-sub{font-size:clamp(19px,2.4vw,30px);font-weight:700;color:var(--gl);
+  margin-top:26px;letter-spacing:.08em}
+#cover .hero-quote{margin-top:18px;color:var(--gw);font-style:italic;font-size:clamp(13px,1.3vw,16px)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:64px;max-width:1060px}
+.stat{padding:24px 22px;border-radius:14px;position:relative;overflow:hidden;
+  background:rgba(12,17,14,.6);border:1px solid var(--hair);backdrop-filter:blur(10px)}
+.stat.hot{background:linear-gradient(135deg,rgba(200,242,71,.95),rgba(183,226,56,.9));color:#0a0d08;border:none;
+  box-shadow:0 0 44px -8px rgba(200,242,71,.6)}
+.stat .v{font:800 clamp(30px,3.4vw,46px) var(--mono);line-height:1}
+.stat .l{font:600 10.5px var(--mono);letter-spacing:.22em;margin-top:10px;
+  color:var(--gw);text-transform:uppercase}
+.stat.hot .l{color:rgba(10,13,8,.65)}
+
+/* ================= 网格工具 ================= */
+.g2{display:grid;grid-template-columns:1fr 1.25fr;gap:26px;align-items:stretch}
+.g2e{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+
+/* ================= 档案 ================= */
+.id-head{display:flex;align-items:center;gap:18px;margin-bottom:8px}
+.avatar{width:66px;height:66px;border-radius:16px;font-size:30px;font-weight:900;
+  background:linear-gradient(135deg,#d8f96a,#aed433);color:#0a0d08;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 30px -4px rgba(200,242,71,.5)}
+.info-row{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px dashed rgba(156,192,134,.14)}
+.info-row:last-child{border-bottom:none}
+.info-row .k{font-size:12.5px;color:var(--gw);width:56px;flex:none}
+.info-row .v{font-size:15.5px;font-weight:700}
+.qual{position:relative;padding:24px}
+.qual h4{font-size:18px;margin:14px 0 8px}
+.qual p{font-size:13px;color:var(--gw);line-height:1.7;white-space:pre-line}
+
+/* ================= 时间线 / 规划 ================= */
+.rail{position:relative;margin-top:44px}
+.rail::before{content:"";position:absolute;top:13px;left:2%;right:2%;height:1px;
+  background:repeating-linear-gradient(90deg,rgba(110,143,46,.55) 0 8px,transparent 8px 16px)}
+.rail .node{position:relative;z-index:2}
+.rail .dot{width:15px;height:15px;border-radius:50%;background:var(--g);margin:6px auto 26px;
+  box-shadow:0 0 0 5px rgba(200,242,71,.14),0 0 18px rgba(200,242,71,.8)}
+.tl-card{position:relative;padding:24px 22px;min-height:290px}
+.tl-card .yr{font:800 34px var(--mono);color:var(--gl)}
+.tl-card h4{font-size:16.5px;margin:12px 0 8px}
+.tl-card .d{font-size:13px;color:var(--gw);line-height:1.65}
+.tl-card .d2{font-size:12px;color:var(--gs);font-style:italic;margin-top:6px;line-height:1.6}
+.kw{margin-top:16px}
+.goal{margin-top:14px;font-size:12.5px;color:var(--gl);font-style:italic;font-weight:700;
+  display:flex;align-items:center;gap:8px}
+.goal::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--g);
+  box-shadow:0 0 10px var(--g);flex:none}
+
+/* ================= 经验/技能 ================= */
+.exp-head{display:flex;gap:16px;align-items:center;margin-bottom:6px}
+.exp-head h3{font-size:22px}
+.exp-sub{font:600 10.5px var(--mono);color:var(--gl);letter-spacing:.14em;margin-bottom:18px}
+.learn{display:flex;align-items:baseline;gap:14px;padding:8px 0;border-bottom:1px dashed rgba(156,192,134,.12)}
+.learn .idx{font:700 12px var(--mono);color:var(--gl);width:26px;flex:none}
+.learn .k{font-weight:700;font-size:14.5px;width:118px;flex:none}
+.learn .v{font-size:13px;color:var(--gw)}
+.skill{margin-top:14px}
+.skill .lab{display:flex;justify-content:space-between;font:600 11px var(--mono);
+  color:var(--gw);letter-spacing:.1em;margin-bottom:7px}
+.bar{height:7px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#7AB832,var(--g));
+  box-shadow:0 0 12px rgba(200,242,71,.55);
+  transition:width 1.2s var(--ease-overshoot);transition-delay:var(--d,0s)}
+section.active .bar i{width:var(--pct)}
+
+/* ================= 证书 ================= */
+.cert{padding:24px;position:relative;display:flex;flex-direction:column}
+.cert-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.cert-head h3{font-size:19px;flex:1}
+.cert-img{border-radius:10px;overflow:hidden;border:1px solid rgba(156,192,134,.16);
+  background:#050807;flex:1;min-height:230px;display:flex;align-items:center;justify-content:center}
+.cert-img img{width:100%;height:100%;object-fit:contain;transition:transform .6s var(--ease-soft)}
+.cert:hover .cert-img img{transform:scale(1.03)}
+.cert .ct{font:700 10.5px var(--mono);color:var(--gl);letter-spacing:.14em;margin:16px 0 6px}
+.cert .cd{font-size:13px;color:var(--gw);line-height:1.7}
+
+/* ================= 项目 ================= */
+.proj{display:grid;grid-template-columns:1.55fr 1fr;gap:30px;align-items:center}
+.proj.flip{grid-template-columns:1fr 1.55fr}
+.proj.flip .p-visual{order:2}
+.p-visual{border-radius:16px;overflow:hidden;border:1px solid var(--hair);position:relative;
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.9),0 0 60px -20px rgba(200,242,71,.25)}
+.p-visual img{width:100%;height:clamp(300px,46vh,460px);object-fit:cover;display:block;
+  transition:transform .8s var(--ease-soft)}
+.proj:hover .p-visual img{transform:scale(1.04)}
+.p-cap{display:flex;align-items:center;gap:12px;margin-top:14px;
+  font:700 11px var(--mono);color:var(--gl);letter-spacing:.18em}
+.p-cap::before{content:"";width:5px;height:18px;border-radius:3px;background:var(--g);
+  box-shadow:0 0 12px var(--g)}
+.p-info{position:relative;padding:30px}
+.p-info .wm-num{font-size:64px;right:22px;top:12px}
+.p-info h3{font-size:21px;line-height:1.35;margin:8px 0 22px}
+.p-row{padding:9px 0}
+.p-row .k{font-size:11.5px;color:var(--gw);letter-spacing:.08em}
+.p-row .v{font-size:14.5px;font-weight:700;margin-top:3px}
+.techs{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+
+/* ================= 音乐 ================= */
+.feat{display:flex;gap:14px;align-items:center;padding:18px}
+.feat h4{font-size:15px}
+.feat p{font-size:12px;color:var(--gw);margin-top:4px}
+.player{padding:32px;display:flex;flex-direction:column}
+.player .np{font:700 10.5px var(--mono);color:var(--gw);letter-spacing:.26em}
+.player .song{font-size:26px;font-weight:800;margin-top:12px}
+.player .style{color:var(--gw);font-size:13px;margin-top:8px}
+.eq{display:flex;align-items:flex-end;gap:4px;height:96px;margin:30px 0 8px}
+.eq span{flex:1;border-radius:4px;background:linear-gradient(180deg,var(--gl),var(--g));
+  height:20%;transform-origin:bottom;transform:scaleY(.25);opacity:.35;transition:opacity .3s}
+section.active .eq span{opacity:1;animation:eqb 1.1s var(--ease-soft) infinite alternate;
+  animation-delay:var(--d,0s)}
+@keyframes eqb{0%{transform:scaleY(.22)}100%{transform:scaleY(1)}}
+.ctrls{display:flex;gap:16px;align-items:center;justify-content:center;margin:18px 0 10px}
+.cbtn{width:46px;height:46px;border-radius:50%;border:1px solid var(--hair);
+  background:rgba(255,255,255,.04);color:var(--gw);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;transition:all .35s var(--ease-overshoot)}
+.cbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.cbtn:hover{border-color:var(--g);color:var(--g);box-shadow:0 0 20px -4px rgba(200,242,71,.5);transform:scale(1.08)}
+.cbtn.play{width:58px;height:58px;background:linear-gradient(135deg,#d8f96a,#b7e238);color:#0a0d08;
+  border:none;box-shadow:0 0 34px -6px rgba(200,242,71,.7)}
+.cbtn.play:hover{transform:scale(1.12)}
+.player .foot{font:600 10px var(--mono);color:var(--gs);letter-spacing:.2em;text-align:center;margin-top:6px}
+
+/* ================= 承诺 ================= */
+.promise{position:relative;padding:30px 28px;display:flex;flex-direction:column}
+.promise .pico{width:52px;height:52px;border-radius:14px;margin-bottom:20px}
+.promise h3{font-size:30px;font-weight:900;letter-spacing:.06em}
+.promise .psub{color:var(--gl);font-weight:700;font-size:15px;margin-top:10px}
+.promise .pidea{color:var(--gw);font-style:italic;font-size:13px;margin-top:10px;line-height:1.7}
+.promise .atag{margin:20px 0 12px;align-self:flex-start}
+.promise ul{flex:1}
+.promise .pledge{margin-top:20px;padding-top:16px;border-top:1px dashed rgba(156,192,134,.18);
+  color:var(--gl);font-style:italic;font-weight:700;font-size:13px}
+
+/* ================= 结尾 ================= */
+.center{text-align:center;align-items:center}
+.big-slogan{font-size:clamp(44px,7vw,92px);font-weight:900;letter-spacing:.06em;line-height:1.15;
+  text-shadow:0 0 70px rgba(200,242,71,.3)}
+.thanks{font:900 clamp(72px,13vw,180px)/1 "Segoe UI","Arial Black",sans-serif;
+  color:var(--g);letter-spacing:.02em;
+  text-shadow:0 0 90px rgba(200,242,71,.45),0 0 30px rgba(200,242,71,.3)}
+
+/* ================= 响应式 ================= */
+/* 窄屏：单列；矮窗口：允许页内滚动（防止内容被 overflow:hidden 裁切） */
+@media (max-width:960px){
+  .stats,.g4{grid-template-columns:repeat(2,1fr)}
+  .g2,.g2e,.g3,.proj,.proj.flip{grid-template-columns:1fr}
+  .proj.flip .p-visual{order:0}
+  #nav{display:none}
+}
+@media (max-width:960px),(max-height:720px){
+  section{overflow-y:auto;padding:70px 6vw 96px;justify-content:flex-start}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<nav id="nav"></nav>
+<div id="hint"><div class="mouse"></div>滚轮 · 方向键 · 滑动翻页</div>
+<div id="pager"><b id="cur">01</b> / 15</div>
+<!-- 屏幕两侧点击翻页区 -->
+<div id="tapL"></div><div id="tapR"></div>
+<div class="tap-hint" id="tapHintL">‹</div><div class="tap-hint" id="tapHintR">›</div>
+<!-- 右侧翻页按钮 -->
+<div id="navbtns">
+  <button class="ctl" id="btnPrev" title="上一页 (↑)">
+    <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+  <button class="ctl" id="btnNext" title="下一页 (↓)">
+    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+  </button>
+</div>
+<button class="ctl" id="fs" title="全屏 (F)">
+  <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+</button>
+
+<!-- SVG 图标库（线性单色） -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+    <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><line x1="2" y1="20" x2="22" y2="20"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v.2h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></symbol>
+    <symbol id="i-headset" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-cap" viewBox="0 0 24 24"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></symbol>
+  </defs>
+</svg>
+
+<div class="deck">
+
+<!-- ============ 01 封面 ============ -->
+<section id="s1" data-bg="_particle_bg/bg_01_cover.png" data-fx="plexus">
+  <div class="wrap">
+    <div class="eyebrow reveal">CAMPAIGN SPEECH · AI PORTFOLIO · 2026.09</div>
+    <h1 class="hero-name reveal" style="--d:.08s">王文杰</h1>
+    <div class="hero-sub reveal" style="--d:.18s">团支书 · 以责任之名，赴青春之约</div>
+    <div class="hero-quote reveal" style="--d:.26s">"不是站在台上才发光，而是发光的人才敢站在台上。"</div>
+    <div class="stats">
+      <div class="stat reveal" style="--d:.34s"><div class="v"><span data-count="5">0</span></div><div class="l">Projects · 落地项目</div></div>
+      <div class="stat reveal" style="--d:.42s"><div class="v"><span data-count="4">0</span></div><div class="l">Certificates · 权威认证</div></div>
+      <div class="stat reveal" style="--d:.5s"><div class="v" style="font-size:clamp(22px,2.4vw,34px)">AI + WEB</div><div class="l">Skills · 技术栈</div></div>
+      <div class="stat hot reveal" style="--d:.58s"><div class="v" style="font-size:clamp(24px,2.6vw,38px)">团支书</div><div class="l">Position · 竞选职位</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 个人档案 ============ -->
+<section id="s2" data-bg="_particle_bg/bg_02_profile.png" data-fx="bokeh">
+  <div class="sec-index mono">02 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">PROFILE · 个人档案</div>
+    <h2 class="h-title reveal" style="--d:.08s;margin-bottom:36px">个人介绍 · 我是谁</h2>
+    <div class="g2">
+      <div class="card reveal" style="--d:.16s">
+        <div class="id-head">
+          <div class="avatar">王</div>
+          <div>
+            <div style="font-size:25px;font-weight:800">王文杰</div>
+            <div class="mono" style="font-size:11px;color:var(--gw);letter-spacing:.2em;margin-top:4px">WANG WENJIE</div>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <div class="info-row"><div class="icon-tile" style="width:34px;height:34px"><svg><use href="#i-home"/></svg></div><div class="k">家乡</div><div class="v">山东潍坊</div></div>
+          <div class="info-row"><div class="icon-tile" style="width:34px;height:34px"><svg><use href="#i-user"/></svg></div><div class="k">性格</div><div class="v">温和沉稳，乐于助人</div></div>
+          <div class="info-row"><div class="icon-tile" style="width:34px;height:34px"><svg><use href="#i-music"/></svg></div><div class="k">爱好</div><div class="v">羽毛球 / AI / 音乐</div></div>
+          <div class="info-row"><div class="icon-tile" style="width:34px;height:34px"><svg><use href="#i-heart"/></svg></div><div class="k">初心</div><div class="v">用行动服务集体</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow reveal" style="--d:.22s">核心素养 · CORE STRENGTHS</div>
+        <div class="g2e">
+          <div class="card qual reveal" style="--d:.28s;position:relative"><div class="wm-num">01</div>
+            <div class="icon-tile"><svg><use href="#i-laptop"/></svg></div>
+            <h4>技术驱动</h4><p>AI 全栈自学，4 项权威认证<br>课程到实战的完整闭环</p></div>
+          <div class="card qual reveal" style="--d:.36s;position:relative"><div class="wm-num">02</div>
+            <div class="icon-tile"><svg><use href="#i-people"/></svg></div>
+            <h4>责任担当</h4><p>高中团支书实战经验<br>组织活动零失误记录</p></div>
+          <div class="card qual reveal" style="--d:.44s;position:relative"><div class="wm-num">03</div>
+            <div class="icon-tile"><svg><use href="#i-target"/></svg></div>
+            <h4>执行力</h4><p>5 个完整落地项目<br>从想法到上线全流程</p></div>
+          <div class="card qual reveal" style="--d:.52s;position:relative"><div class="wm-num">04</div>
+            <div class="icon-tile"><svg><use href="#i-refresh"/></svg></div>
+            <h4>成长型</h4><p>从内向到破局的蜕变<br>敢站上更高的舞台</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 成长轨迹 ============ -->
+<section id="s3" data-bg="_particle_bg/bg_03_timeline.png" data-fx="wave">
+  <div class="sec-index mono">03 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">JOURNEY · 成长轨迹</div>
+    <h2 class="h-title reveal" style="--d:.08s">四阶段蜕变 · 从内向到担当</h2>
+    <div class="rail g4">
+      <div class="node reveal" style="--d:.2s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">2021</div>
+          <div class="icon-tile" style="margin:10px 0"><svg><use href="#i-bulb"/></svg></div>
+          <h4>初中 · 埋下种子</h4>
+          <div class="d">内向寡言，畏惧公开发言</div>
+          <div class="d2">第一次班会发言，声音都在抖</div>
+          <div class="kw tag">· 萌芽 ·</div></div></div>
+      <div class="node reveal" style="--d:.32s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">2024</div>
+          <div class="icon-tile" style="margin:10px 0"><svg><use href="#i-bolt"/></svg></div>
+          <h4>高中 · 勇敢破局</h4>
+          <div class="d">竞选并担任团支书</div>
+          <div class="d2">组织团日活动，收获同学信任</div>
+          <div class="kw tag">· 破局 ·</div></div></div>
+      <div class="node reveal" style="--d:.44s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">2025</div>
+          <div class="icon-tile" style="margin:10px 0"><svg><use href="#i-star"/></svg></div>
+          <h4>坚持 · 磨练意志</h4>
+          <div class="d">羽毛球训练，培养韧性</div>
+          <div class="d2">班级事务零失误，广受好评</div>
+          <div class="kw tag">· 沉淀 ·</div></div></div>
+      <div class="node reveal" style="--d:.56s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">2026</div>
+          <div class="icon-tile" style="margin:10px 0"><svg><use href="#i-star"/></svg></div>
+          <h4>此刻 · 发光担当</h4>
+          <div class="d">怀揣 AI 梦想，站上更高舞台</div>
+          <div class="d2">用技术服务班级，继续发光</div>
+          <div class="kw tag">· 发光 ·</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 经验与学习 ============ -->
+<section id="s4" data-bg="_particle_bg/bg_04_exp.png" data-fx="plexus">
+  <div class="sec-index mono">04 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">EXPERIENCE &amp; LEARNING · 经验与学习</div>
+    <h2 class="h-title reveal" style="--d:.08s;margin-bottom:34px">责任担当 × 技术驱动</h2>
+    <div class="g2e">
+      <div class="card reveal" style="--d:.16s">
+        <div class="exp-head"><div class="icon-tile"><svg><use href="#i-people"/></svg></div><h3>责任担当</h3></div>
+        <div class="exp-sub">RESPONSIBILITY · 高中团支书</div>
+        <ul class="check">
+          <li><svg><use href="#i-check"/></svg>组织班级团日活动，协调同学分工</li>
+          <li><svg><use href="#i-check"/></svg>搭建师生沟通桥梁，及时传达反馈</li>
+          <li><svg><use href="#i-check"/></svg>管理班级通知体系，响应零延迟</li>
+          <li><svg><use href="#i-check"/></svg>在压力下保持条理与耐心</li>
+        </ul>
+      </div>
+      <div class="card reveal" style="--d:.26s">
+        <div class="exp-head"><div class="icon-tile"><svg><use href="#i-laptop"/></svg></div><h3>技术驱动</h3></div>
+        <div class="exp-sub">TECH-DRIVEN · AI 自学之路</div>
+        <div class="learn"><span class="idx">01</span><span class="k">AI 大学堂</span><span class="v">四大工程师认证全通关</span></div>
+        <div class="learn"><span class="idx">02</span><span class="k">阿里云 Clouder</span><span class="v">大模型应用构建与优化</span></div>
+        <div class="learn"><span class="idx">03</span><span class="k">Datawhale</span><span class="v">开源社区协作实战</span></div>
+        <div class="learn"><span class="idx">04</span><span class="k">阿里云达摩院</span><span class="v">人工智能训练师双认证</span></div>
+        <div class="learn" style="border-bottom:none"><span class="idx">05</span><span class="k">Trae AI</span><span class="v">AI 辅助编码实战</span></div>
+        <div class="exp-sub" style="margin:20px 0 4px">SKILL MATRIX · 能力矩阵</div>
+        <div class="skill"><div class="lab"><span>PYTHON</span><span>82%</span></div><div class="bar"><i style="--pct:82%;--d:.3s"></i></div></div>
+        <div class="skill"><div class="lab"><span>PROMPT</span><span>88%</span></div><div class="bar"><i style="--pct:88%;--d:.42s"></i></div></div>
+        <div class="skill"><div class="lab"><span>CLOUD</span><span>62%</span></div><div class="bar"><i style="--pct:62%;--d:.54s"></i></div></div>
+        <div class="skill"><div class="lab"><span>VISION</span><span>70%</span></div><div class="bar"><i style="--pct:70%;--d:.66s"></i></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 证书 1 ============ -->
+<section id="s5" data-bg="_particle_bg/bg_05_certs1.png" data-fx="bokeh">
+  <div class="sec-index mono">05 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">CERTIFICATION · 权威认证</div>
+    <h2 class="h-title reveal" style="--d:.08s;margin-bottom:34px">AI 认证 · 平台课程</h2>
+    <div class="g2e">
+      <div class="card cert reveal" style="--d:.16s">
+        <div class="cert-head"><div class="icon-tile"><svg><use href="#i-cap"/></svg></div>
+          <h3>AI 大学堂</h3><span class="tag">✓ 已认证</span></div>
+        <div class="cert-img"><img src="_ppt_extracted/ppt/media/image7.png" alt="AI 大学堂认证" loading="lazy"></div>
+        <div class="ct">AI DAXUE · 4 CERTS</div>
+        <div class="cd">RAG / 微调 / 智能体 / Prompt 工程师，四大工程师认证全通关。</div>
+      </div>
+      <div class="card cert reveal" style="--d:.28s">
+        <div class="cert-head"><div class="icon-tile"><svg><use href="#i-cloud"/></svg></div>
+          <h3>阿里云 Clouder</h3><span class="tag">✓ 已认证</span></div>
+        <div class="cert-img"><img src="_ppt_extracted/ppt/media/image6.png" alt="阿里云 Clouder 认证" loading="lazy"></div>
+        <div class="ct">ALIYUN CLOUD CERT</div>
+        <div class="cd">大模型 Clouder 认证：RAG 应用构建、VISION 设计、Spring AI 等多项通过。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 证书 2 ============ -->
+<section id="s6" data-bg="_particle_bg/bg_06_certs2.png" data-fx="bokeh">
+  <div class="sec-index mono">06 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">CERTIFICATION · 权威认证</div>
+    <h2 class="h-title reveal" style="--d:.08s;margin-bottom:34px">AI 认证 · 开源 + 产业</h2>
+    <div class="g2e">
+      <div class="card cert reveal" style="--d:.16s">
+        <div class="cert-head"><div class="icon-tile"><svg><use href="#i-terminal"/></svg></div>
+          <h3>Datawhale</h3><span class="tag">✓ 已认证</span></div>
+        <div class="cert-img"><img src="_ppt_extracted/ppt/media/image10.png" alt="Datawhale 认证" loading="lazy"></div>
+        <div class="ct">OPEN SOURCE COMMUNITY</div>
+        <div class="cd">Prompt / Agent / LLM / Fine-tuning 多方向认证，开源协作实战。</div>
+      </div>
+      <div class="card cert reveal" style="--d:.28s">
+        <div class="cert-head"><div class="icon-tile"><svg><use href="#i-bulb"/></svg></div>
+          <h3>阿里云达摩院</h3><span class="tag">✓ 已认证</span></div>
+        <div class="cert-img"><img src="_ppt_extracted/ppt/media/image9.png" alt="达摩院认证" loading="lazy"></div>
+        <div class="ct">DAMO ACADEMY</div>
+        <div class="cd">人工智能训练师（初级 + 高级）双认证，AI 训练与数据能力证明。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 项目：飞机大战 ============ -->
+<section id="s7" data-bg="_particle_bg/bg_07_plane.png" data-fx="wave">
+  <div class="sec-index mono">07 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">PROJECT 01 / 05 · PLANE</div>
+    <div class="proj">
+      <div class="p-visual reveal" style="--d:.12s">
+        <img src="_ppt_extracted/ppt/media/image11.png" alt="飞机大战">
+      </div>
+      <div class="card p-info reveal" style="--d:.24s"><div class="wm-num">01</div>
+        <div class="mono" style="font-size:10px;color:var(--gw);letter-spacing:.2em">PROJECT INFO</div>
+        <h3>飞机大战 · Trae AI 辅助开发</h3>
+        <div class="p-row"><div class="k">开发平台</div><div class="v">Trae AI + Python</div></div>
+        <div class="p-row"><div class="k">游戏模式</div><div class="v">单人 / 双人 / PK</div></div>
+        <div class="p-row"><div class="k">核心特色</div><div class="v">Boss 战 · 波次设计</div></div>
+        <div class="p-row"><div class="k">项目收获</div><div class="v">AI 协作开发全流程实践</div></div>
+        <div class="techs"><span class="tag">Python</span><span class="tag">Pygame</span><span class="tag">AI 辅助</span><span class="tag">Trae</span></div>
+      </div>
+    </div>
+    <div class="p-cap reveal" style="--d:.34s">SKYLINE DEFENDER · PYGAME</div>
+  </div>
+</section>
+
+<!-- ============ 08 项目：粒子星云 ============ -->
+<section id="s8" data-bg="_particle_bg/bg_08_nebula.png" data-fx="plexus">
+  <div class="sec-index mono">08 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">PROJECT 02 / 05 · NEBULA</div>
+    <div class="proj flip">
+      <div class="p-visual reveal" style="--d:.12s">
+        <img src="_ppt_extracted/ppt/media/image14.png" alt="粒子星云">
+      </div>
+      <div class="card p-info reveal" style="--d:.24s"><div class="wm-num">02</div>
+        <div class="mono" style="font-size:10px;color:var(--gw);letter-spacing:.2em">PROJECT INFO</div>
+        <h3>粒子星云 · 物理引擎可视化</h3>
+        <div class="p-row"><div class="k">项目类型</div><div class="v">物理粒子系统</div></div>
+        <div class="p-row"><div class="k">核心能力</div><div class="v">粒子轨迹仿真</div></div>
+        <div class="p-row"><div class="k">项目亮点</div><div class="v">每颗粒子独立轨迹</div></div>
+        <div class="p-row"><div class="k">项目收获</div><div class="v">物理建模与渲染性能调优</div></div>
+        <div class="techs"><span class="tag">Python</span><span class="tag">Particle</span><span class="tag">Physics</span><span class="tag">Visual</span></div>
+      </div>
+    </div>
+    <div class="p-cap reveal" style="--d:.34s">PARTICLE SYSTEM · PHYSICS ENGINE</div>
+  </div>
+</section>
+
+<!-- ============ 09 项目：手势切水果 ============ -->
+<section id="s9" data-bg="_particle_bg/bg_09_gesture.png" data-fx="wave">
+  <div class="sec-index mono">09 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">PROJECT 03 / 05 · GESTURE</div>
+    <div class="proj">
+      <div class="p-visual reveal" style="--d:.12s">
+        <img src="_ppt_extracted/ppt/media/image17.png" alt="手势切水果">
+      </div>
+      <div class="card p-info reveal" style="--d:.24s"><div class="wm-num">03</div>
+        <div class="mono" style="font-size:10px;color:var(--gw);letter-spacing:.2em">PROJECT INFO</div>
+        <h3>手势切水果 · AI Vision</h3>
+        <div class="p-row"><div class="k">核心技术</div><div class="v">MediaPipe 手部捕捉</div></div>
+        <div class="p-row"><div class="k">交互方式</div><div class="v">实时手势识别</div></div>
+        <div class="p-row"><div class="k">玩法亮点</div><div class="v">碰撞检测切水果</div></div>
+        <div class="p-row"><div class="k">项目收获</div><div class="v">视觉算法实时工程化落地</div></div>
+        <div class="techs"><span class="tag">MediaPipe</span><span class="tag">OpenCV</span><span class="tag">AI Vision</span><span class="tag">Real-time</span></div>
+      </div>
+    </div>
+    <div class="p-cap reveal" style="--d:.34s">AI VISION PIPELINE · MEDIAPIPE</div>
+  </div>
+</section>
+
+<!-- ============ 10 项目：个人网站 ============ -->
+<section id="s10" data-bg="_particle_bg/bg_10_website.png" data-fx="bokeh">
+  <div class="sec-index mono">10 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">PROJECT 04 / 05 · WEBSITE</div>
+    <div class="proj flip">
+      <div class="p-visual reveal" style="--d:.12s">
+        <img src="_ppt_extracted/ppt/media/image18.png" alt="个人简历网站">
+      </div>
+      <div class="card p-info reveal" style="--d:.24s"><div class="wm-num">04</div>
+        <div class="mono" style="font-size:10px;color:var(--gw);letter-spacing:.2em">PROJECT INFO</div>
+        <h3>个人简历网站 · 全流程能力</h3>
+        <div class="p-row"><div class="k">开发能力</div><div class="v">全栈开发与部署</div></div>
+        <div class="p-row"><div class="k">设计细节</div><div class="v">深色主题 · 响应式</div></div>
+        <div class="p-row"><div class="k">性能优化</div><div class="v">高性能加载适配</div></div>
+        <div class="p-row"><div class="k">项目收获</div><div class="v">设计到上线独立闭环</div></div>
+        <div class="techs"><span class="tag">HTML/CSS</span><span class="tag">JavaScript</span><span class="tag">Deploy</span><span class="tag">Responsive</span></div>
+      </div>
+    </div>
+    <div class="p-cap reveal" style="--d:.34s">FULL-STACK · RESPONSIVE DESIGN</div>
+  </div>
+</section>
+
+<!-- ============ 11 AI 音乐 ============ -->
+<section id="s11" data-bg="_particle_bg/bg_11_seedmusic.png" data-fx="wave">
+  <div class="sec-index mono">11 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">PROJECT 05 / 05 · AI MUSIC</div>
+    <h2 class="h-title reveal" style="--d:.08s;margin-bottom:30px">AI 制作音乐 · SeedMusic 1.0</h2>
+    <div class="g2">
+      <div>
+        <p class="lead reveal" style="--d:.16s">用 AI 辅助写歌、生成旋律，<br>探索技术与艺术的交汇点，<br>让每个人都能成为创作者。</p>
+        <p class="reveal" style="--d:.24s;color:var(--gl);font-style:italic;font-weight:700;font-size:13px;margin:14px 0 26px">
+          从 v1.0 到 v1.2 持续迭代 · 这首歌唱给全班听</p>
+        <div class="g2e">
+          <div class="card feat reveal" style="--d:.3s"><div class="icon-tile"><svg><use href="#i-note"/></svg></div>
+            <div><h4>歌词创作</h4><p>AI 辅助写歌</p></div></div>
+          <div class="card feat reveal" style="--d:.38s"><div class="icon-tile"><svg><use href="#i-headset"/></svg></div>
+            <div><h4>风格控制</h4><p>国风 / 电子 / R&amp;B</p></div></div>
+          <div class="card feat reveal" style="--d:.46s"><div class="icon-tile"><svg><use href="#i-refresh"/></svg></div>
+            <div><h4>多版本管理</h4><p>持续生成歌曲</p></div></div>
+          <div class="card feat reveal" style="--d:.54s"><div class="icon-tile"><svg><use href="#i-bulb"/></svg></div>
+            <div><h4>AI 创意实践</h4><p>生成式 AI 创作</p></div></div>
+        </div>
+      </div>
+      <div class="card player reveal" style="--d:.28s">
+        <div class="np">NOW PLAYING</div>
+        <div class="song">《青春序曲》 <span style="font-size:15px;color:var(--gw);font-weight:400">v1.2</span></div>
+        <div class="style">国风 · 抒情 · 电子融合</div>
+        <div class="eq" id="eq"></div>
+        <div class="ctrls">
+          <div class="cbtn"><svg><use href="#i-prev"/></svg></div>
+          <div class="cbtn play"><svg style="fill:currentColor;stroke:none"><use href="#i-play"/></svg></div>
+          <div class="cbtn"><svg><use href="#i-next"/></svg></div>
+        </div>
+        <div class="foot">SEEDMUSIC · GENERATIVE AI</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12 大学四年规划 ============ -->
+<section id="s12" data-bg="_particle_bg/bg_12_roadmap.png" data-fx="bokeh">
+  <div class="sec-index mono">12 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">MY PLAN · 大学四年规划</div>
+    <h2 class="h-title reveal" style="--d:.08s">Roadmap · 与班级同频共振</h2>
+    <p class="lead reveal" style="--d:.16s;margin:14px 0 0">从融入集体 → 深耕方向 → 冲刺沉淀 → 共同上岸，每一步都与大家同行</p>
+    <div class="rail g4">
+      <div class="node reveal" style="--d:.24s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">大一</div>
+          <h4>融入与建设</h4>
+          <ul class="check" style="margin-top:6px">
+            <li><svg><use href="#i-check"/></svg>组织班级活动</li>
+            <li><svg><use href="#i-check"/></svg>建立学习小组</li>
+            <li><svg><use href="#i-check"/></svg>破冰团建策划</li>
+          </ul>
+          <div class="goal">让每个人都有归属感</div></div></div>
+      <div class="node reveal" style="--d:.36s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">大二</div>
+          <h4>深耕与突破</h4>
+          <ul class="check" style="margin-top:6px">
+            <li><svg><use href="#i-check"/></svg>技术分享会</li>
+            <li><svg><use href="#i-check"/></svg>学科竞赛组队</li>
+            <li><svg><use href="#i-check"/></svg>AI 工具科普</li>
+          </ul>
+          <div class="goal">让每个人都能成长</div></div></div>
+      <div class="node reveal" style="--d:.48s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">大三</div>
+          <h4>冲刺与沉淀</h4>
+          <ul class="check" style="margin-top:6px">
+            <li><svg><use href="#i-check"/></svg>考研就业互助</li>
+            <li><svg><use href="#i-check"/></svg>经验传承</li>
+            <li><svg><use href="#i-check"/></svg>资源共享库</li>
+          </ul>
+          <div class="goal">不让一个人掉队</div></div></div>
+      <div class="node reveal" style="--d:.6s"><div class="dot"></div>
+        <div class="card tl-card"><div class="yr">大四</div>
+          <h4>收获与上岸</h4>
+          <ul class="check" style="margin-top:6px">
+            <li><svg><use href="#i-check"/></svg>毕业纪念</li>
+            <li><svg><use href="#i-check"/></svg>全员圆满</li>
+            <li><svg><use href="#i-check"/></svg>班级回忆录</li>
+          </ul>
+          <div class="goal">留下最美的班级记忆</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13 三大承诺 ============ -->
+<section id="s13" data-bg="_particle_bg/bg_13_promise.png" data-fx="plexus">
+  <div class="sec-index mono">13 / 15</div>
+  <div class="wrap">
+    <div class="eyebrow reveal">MY COMMITMENT · 三大承诺</div>
+    <h2 class="h-title reveal" style="--d:.08s;margin-bottom:34px">如果我是团支书</h2>
+    <div class="g3">
+      <div class="card promise reveal" style="--d:.18s;position:relative"><div class="wm-num">01</div>
+        <div class="accent-card pico"><svg style="width:24px;height:24px;stroke:#0a0d08;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#i-headset"/></svg></div>
+        <h3>服务</h3>
+        <div class="psub">班级服务员</div>
+        <div class="pidea">把代码里的严谨，带进班级每一件小事</div>
+        <span class="tag atag">ACTIONS · 行动清单</span>
+        <ul class="check">
+          <li><svg><use href="#i-check"/></svg>班级事务建台账，事事有回应</li>
+          <li><svg><use href="#i-check"/></svg>重要通知当日达，绝不隔夜</li>
+          <li><svg><use href="#i-check"/></svg>同学困难主动帮，提前搭把手</li>
+        </ul>
+        <div class="pledge">服务不是口号，是每天的行动力</div>
+      </div>
+      <div class="card promise reveal" style="--d:.32s;position:relative"><div class="wm-num">02</div>
+        <div class="accent-card pico"><svg style="width:24px;height:24px;stroke:#0a0d08;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#i-link"/></svg></div>
+        <h3>连接</h3>
+        <div class="psub">师生连接桥</div>
+        <div class="pidea">让信息在师生之间零障碍流动</div>
+        <span class="tag atag">ACTIONS · 行动清单</span>
+        <ul class="check">
+          <li><svg><use href="#i-check"/></svg>每周收集建议，整理成清单反馈</li>
+          <li><svg><use href="#i-check"/></svg>政策通知"翻译"成人话再传达</li>
+          <li><svg><use href="#i-check"/></svg>搭建答疑渠道，问题不过夜</li>
+        </ul>
+        <div class="pledge">不让任何一条消息石沉大海</div>
+      </div>
+      <div class="card promise reveal" style="--d:.46s;position:relative"><div class="wm-num">03</div>
+        <div class="accent-card pico"><svg style="width:24px;height:24px;stroke:#0a0d08;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#i-people"/></svg></div>
+        <h3>成长</h3>
+        <div class="psub">成长同行者</div>
+        <div class="pidea">一个人走得快，一群人走得远</div>
+        <span class="tag atag">ACTIONS · 行动清单</span>
+        <ul class="check">
+          <li><svg><use href="#i-check"/></svg>组织 AI / 编程主题分享会</li>
+          <li><svg><use href="#i-check"/></svg>考前资料共建，笔记共享</li>
+          <li><svg><use href="#i-check"/></svg>组队参加科创赛，一起拿奖</li>
+        </ul>
+        <div class="pledge">和你一起，成为更好的自己</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 14 结语 ============ -->
+<section id="s14" class="center" data-bg="_particle_bg/bg_14_closing.png" data-fx="wave">
+  <div class="sec-index mono">14 / 15</div>
+  <div class="wrap center" style="display:flex;flex-direction:column;align-items:center">
+    <div class="eyebrow reveal">FINAL WORDS · MY COMMITMENT</div>
+    <h2 class="big-slogan reveal" style="--d:.12s;margin:20px 0 30px">不画大饼，<span class="g">只做实事</span></h2>
+    <p class="lead reveal" style="--d:.26s;max-width:640px">请大家给我一个机会，我会用实际行动，<br>把班级变成我们想象中的样子。</p>
+    <div class="reveal" style="--d:.4s;margin-top:36px;color:var(--gl);font-weight:700;font-size:17px">—— 王文杰</div>
+  </div>
+</section>
+
+<!-- ============ 15 致谢 ============ -->
+<section id="s15" class="center" data-bg="_particle_bg/bg_15_thanks.png" data-fx="plexus">
+  <div class="sec-index mono">15 / 15</div>
+  <div class="wrap center" style="display:flex;flex-direction:column;align-items:center">
+    <div class="thanks reveal">THANK YOU</div>
+    <div class="reveal" style="--d:.2s;margin-top:34px;font-size:clamp(18px,2.2vw,27px);font-weight:700">感谢聆听 · 以发光之姿，赴青春之约</div>
+    <div class="reveal" style="--d:.34s;margin-top:16px;color:var(--gw);font-style:italic;font-size:14px" class="mono">Explore Infinite Possibilities</div>
+  </div>
+</section>
+
+</div><!-- /deck -->
+
+<script>
+/* ================================================================
+   粒子特效引擎 —— 三种模式：plexus / wave / bokeh
+   性能预算：单画布粒子上限 75；仅可见 section 参与渲染；
+   DPR 上限 1.5；离开视口自动暂停。
+   ================================================================ */
+(function(){
+  const GREEN = [200,242,71], LIME = [227,247,168], DIM = [110,143,46];
+  const sections = Array.from(document.querySelectorAll('section'));
+  const canvases = [];
+  let mouse = {x:-9999,y:-9999};
+
+  function rgba(c,a){return `rgba(${c[0]},${c[1]},${c[2]},${a})`;}
+  function rnd(a,b){return a+Math.random()*(b-a);}
+
+  /* ---------- 背景图注入 ---------- */
+  sections.forEach(sec=>{
+    const bg = sec.dataset.bg;
+    if(bg){
+      const d = document.createElement('div');
+      d.className = 'bg-img';
+      d.style.backgroundImage = `url("${bg}")`;
+      sec.insertBefore(d, sec.firstChild);
+    }
+    const fx = sec.dataset.fx;
+    if(fx){
+      const cv = document.createElement('canvas');
+      cv.className = 'fx';
+      sec.insertBefore(cv, sec.querySelector('.wrap') ? sec.querySelector('.wrap') : null) ;
+      canvases.push({cv, sec, mode:fx, active:false, particles:null, t:0});
+    }
+  });
+
+  function resize(c){
+    const r = c.sec.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio||1, 1.5);
+    c.w = r.width; c.h = r.height;
+    c.cv.width = r.width*dpr; c.cv.height = r.height*dpr;
+    c.ctx = c.cv.getContext('2d');
+    c.ctx.setTransform(dpr,0,0,dpr,0,0);
+    initParticles(c);
+  }
+
+  /* ---------- 粒子初始化（按模式） ---------- */
+  function initParticles(c){
+    const N = c.mode==='wave' ? 70 : c.mode==='plexus' ? 62 : 30;
+    const ps = [];
+    for(let i=0;i<N;i++){
+      if(c.mode==='plexus'){
+        ps.push({x:rnd(0,c.w),y:rnd(0,c.h),vx:rnd(-.25,.25),vy:rnd(-.25,.25),
+          r:rnd(1.2,2.6),hot:Math.random()<.12,ph:rnd(0,6.28)});
+      }else if(c.mode==='wave'){
+        ps.push({x:rnd(0,c.w),y:rnd(0,c.h),vx:rnd(.15,.5),vy:rnd(-.05,.05),
+          r:rnd(.8,2.2),amp:rnd(14,46),freq:rnd(.004,.01),ph:rnd(0,6.28),
+          drift:rnd(.2,1),hot:Math.random()<.1});
+      }else{ /* bokeh */
+        ps.push({x:rnd(0,c.w),y:rnd(0,c.h),vx:rnd(-.12,.12),vy:rnd(-.22,-.06),
+          r:rnd(6,26),a:rnd(.05,.2),hot:Math.random()<.08,ph:rnd(0,6.28)});
+      }
+    }
+    c.particles = ps;
+  }
+
+  /* ---------- 绘制 ---------- */
+  function drawPlexus(c){
+    const ctx=c.ctx, ps=c.particles;
+    ctx.clearRect(0,0,c.w,c.h);
+    const link = 130;
+    for(let i=0;i<ps.length;i++){
+      const p=ps[i];
+      p.x+=p.vx; p.y+=p.vy; p.ph+=.02;
+      if(p.x<-20)p.x=c.w+20; if(p.x>c.w+20)p.x=-20;
+      if(p.y<-20)p.y=c.h+20; if(p.y>c.h+20)p.y=-20;
+      /* 鼠标轻微吸引（仅封面） */
+      if(c.sec.id==='s1'){
+        const dx=mouse.x-p.x, dy=mouse.y-p.y, d=Math.hypot(dx,dy);
+        if(d<180 && d>1){p.x+=dx/d*.35; p.y+=dy/d*.35;}
+      }
+      for(let j=i+1;j<ps.length;j++){
+        const q=ps[j], dx=p.x-q.x, dy=p.y-q.y, d=Math.hypot(dx,dy);
+        if(d<link){
+          const a=(1-d/link)*.16;
+          ctx.strokeStyle=rgba(GREEN,a);
+          ctx.lineWidth=.7;
+          ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+        }
+      }
+    }
+    for(const p of ps){
+      const glow = p.hot ? .85+Math.sin(p.ph)*.15 : .5;
+      ctx.beginPath();
+      ctx.fillStyle=rgba(p.hot?LIME:GREEN, glow*.7);
+      ctx.shadowColor=rgba(GREEN,.8); ctx.shadowBlur=p.hot?14:7;
+      ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function drawWave(c){
+    const ctx=c.ctx, ps=c.particles;
+    c.t+=.016;
+    ctx.clearRect(0,0,c.w,c.h);
+    /* 能量浪脊：一条发光正弦线 */
+    ctx.beginPath();
+    for(let x=0;x<=c.w;x+=8){
+      const y=c.h*.62 + Math.sin(x*.006+c.t*1.4)*26 + Math.sin(x*.013-c.t)*12;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=rgba(GREEN,.14); ctx.lineWidth=2.2;
+    ctx.shadowColor=rgba(GREEN,.7); ctx.shadowBlur=16;
+    ctx.stroke(); ctx.shadowBlur=0;
+
+    for(const p of ps){
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x>c.w+10){p.x=-10; p.y=rnd(0,c.h);}
+      const waveY = c.h*.62 + Math.sin(p.x*.006+c.t*1.4)*26 + Math.sin(p.x*.013-c.t)*12;
+      const near = Math.max(0,1-Math.abs(p.y-waveY)/140);
+      const yy = p.y + Math.sin(c.t*p.drift+p.ph)*p.amp*.02;
+      const a = .12+near*.5;
+      ctx.beginPath();
+      ctx.fillStyle=rgba(p.hot?LIME:GREEN, a);
+      ctx.shadowColor=rgba(GREEN,.7); ctx.shadowBlur=p.hot?12:5;
+      ctx.arc(p.x,yy,p.r*(1+near*.6),0,6.283); ctx.fill();
+      ctx.shadowBlur=0;
+    }
+  }
+
+  function drawBokeh(c){
+    const ctx=c.ctx, ps=c.particles;
+    ctx.clearRect(0,0,c.w,c.h);
+    for(const p of ps){
+      p.x+=p.vx; p.y+=p.vy; p.ph+=.01;
+      if(p.y<-40){p.y=c.h+40; p.x=rnd(0,c.w);}
+      if(p.x<-40)p.x=c.w+40; if(p.x>c.w+40)p.x=-40;
+      const pulse=.75+Math.sin(p.ph)*.25;
+      const col=p.hot?LIME:GREEN;
+      const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*2.2);
+      g.addColorStop(0,rgba(col,p.a*1.4*pulse));
+      g.addColorStop(.4,rgba(col,p.a*.6*pulse));
+      g.addColorStop(1,rgba(col,0));
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*2.2,0,6.283); ctx.fill();
+      if(p.hot){
+        ctx.beginPath(); ctx.fillStyle=rgba(LIME,.8*pulse);
+        ctx.arc(p.x,p.y,1.8,0,6.283); ctx.fill();
+      }
+    }
+  }
+
+  /* ---------- 可见性：由翻页控制器手动设置 ---------- */
+  function activateSec(sec){
+    canvases.forEach(c=>{
+      const on = c.sec===sec;
+      if(on && !c.ctx) resize(c);
+      c.active = on;
+    });
+  }
+  window.__fx = {
+    activate: activateSec,
+    /* 翻页过渡期间：新旧两页的粒子都保持渲染 */
+    keepBoth(secA, secB){
+      canvases.forEach(c=>{
+        const on = c.sec===secA || c.sec===secB;
+        if(on && !c.ctx) resize(c);
+        c.active = on;
+      });
+    }
+  };
+  const first = canvases.find(c=>c.sec.id==='s1');
+  if(first){ first.active = true; resize(first); }
+
+  window.addEventListener('resize', ()=>canvases.forEach(c=>{ if(c.active) resize(c); }));
+  window.addEventListener('mousemove', e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
+
+  let frame=0;
+  function loop(){
+    frame++;
+    for(const c of canvases){
+      if(!c.active || !c.ctx) continue;
+      if(frame%2===0 && c.mode==='bokeh') continue; /* bokeh 隔帧渲染省性能 */
+      if(c.mode==='plexus') drawPlexus(c);
+      else if(c.mode==='wave') drawWave(c);
+      else drawBokeh(c);
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ================================================================
+   翻页控制器 —— 滚轮 / 触摸 / 键盘 / 导航点 统一入口
+   ================================================================ */
+(function(){
+  const slides = Array.from(document.querySelectorAll('section'));
+  const total  = slides.length;
+  const nav    = document.getElementById('nav');
+  const prog   = document.getElementById('progress');
+  const pager  = document.getElementById('cur');
+  const hint   = document.getElementById('hint');
+  const fx     = window.__fx;
+  const labels = ['封面','档案','轨迹','经验','认证','认证','项目','项目','项目','项目',
+                  '音乐','规划','承诺','结语','致谢'];
+
+  let cur = 0;
+  let locked = false;
+  let pending = 0;   /* 锁定期内积压的翻页意图：+1 下翻 / -1 上翻 */
+  const ANIM_MS = 620;
+
+  /* ---------- 右侧导航点 ---------- */
+  const dots = labels.map((t,i)=>{
+    const a = document.createElement('a');
+    a.href = '#'+slides[i].id;
+    a.dataset.t = t;
+    a.addEventListener('click', e=>{ e.preventDefault(); jumpTo(i); });
+    nav.appendChild(a);
+    return a;
+  });
+
+  /* ---------- 页内还能否滚动（仅小屏 overflow:auto 模式下优先页内滚动） ---------- */
+  function canScroll(sec, dir){
+    const oy = getComputedStyle(sec).overflowY;
+    if(oy !== 'auto' && oy !== 'scroll') return false;  /* 桌面端 overflow:hidden 不拦截 */
+    if(sec.scrollHeight <= sec.clientHeight + 4) return false;
+    if(dir > 0) return sec.scrollTop + sec.clientHeight < sec.scrollHeight - 12;
+    return sec.scrollTop > 12;
+  }
+
+  /* ---------- 核心翻页 ---------- */
+  let lockTimer = null;
+  function unlock(){
+    locked = false;
+    if(lockTimer){ clearTimeout(lockTimer); lockTimer = null; }
+  }
+  function goTo(i){
+    if(locked || i===cur || i<0 || i>=total) return;
+    const dir = i > cur ? 'next' : 'prev';
+    locked = true;
+    const from = slides[cur], to = slides[i];
+
+    from.classList.remove('active');
+    from.classList.add(dir==='next' ? 'out-next' : 'out-prev');
+    to.classList.add('active', dir==='next' ? 'in-next' : 'in-prev');
+
+    /* 过渡期间两页粒子都渲染，结束后只留新页 */
+    if(fx) fx.keepBoth(from, to);
+
+    history.replaceState(null,'','#'+to.id);
+    updateUI(i);
+    if(to.id==='s1') setTimeout(runCounters, 250);
+
+    setTimeout(()=>{
+      from.classList.remove('out-next','out-prev');
+      to.classList.remove('in-next','in-prev');
+      from.scrollTop = 0;
+      if(fx) fx.activate(to);
+      cur = i;
+      unlock();
+      /* 消化锁定期内积压的翻页意图（连滚/快按时逐页补翻） */
+      if(pending !== 0){
+        const d = pending > 0 ? 1 : -1;
+        pending = 0;
+        setTimeout(()=>requestGo(d), 60);
+      }
+    }, ANIM_MS);
+    /* 兜底：任何异常下 1.2s 强制解锁，防止永久卡死 */
+    if(lockTimer) clearTimeout(lockTimer);
+    lockTimer = setTimeout(unlock, 1200);
+  }
+  /* 请求翻页：锁定时记录意图，解锁后自动补翻 */
+  function requestGo(dir){
+    if(locked){ pending += dir; return; }
+    goTo(cur + dir);
+  }
+  const next = ()=>requestGo(1);
+  const prev = ()=>requestGo(-1);
+
+  /* 强制跳转（导航点 / Home / End）：清空积压意图与过渡态立即跳 */
+  function jumpTo(i){
+    if(i<0 || i>=total || i===cur) return;
+    pending = 0;
+    slides.forEach(s=>s.classList.remove('in-next','in-prev','out-next','out-prev'));
+    unlock();
+    goTo(i);
+  }
+
+  function updateUI(i){
+    dots.forEach((d,k)=>d.classList.toggle('on', k===i));
+    prog.style.transform = `scaleX(${i/(total-1)})`;
+    pager.textContent = String(i+1).padStart(2,'0');
+    hint.style.opacity = i===0 ? '1' : '0';
+  }
+
+  /* ---------- 数字滚动（只播一次） ---------- */
+  let counted = false;
+  function runCounters(){
+    if(counted) return; counted = true;
+    document.querySelectorAll('[data-count]').forEach(el=>{
+      const target = +el.dataset.count, dur = 1100, t0 = performance.now();
+      (function tick(t){
+        const k = Math.min(1,(t-t0)/dur);
+        const e = 1-Math.pow(1-k,3);
+        el.textContent = String(Math.round(target*e)).padStart(2,'0');
+        if(k<1) requestAnimationFrame(tick);
+        else el.textContent = String(target).padStart(2,'0');
+      })(t0);
+    });
+  }
+
+  /* ---------- 均衡器 30 根柱 ---------- */
+  const eq = document.getElementById('eq');
+  if(eq){
+    for(let i=0;i<30;i++){
+      const b=document.createElement('span');
+      b.style.setProperty('--d',(i*0.035)+'s');
+      b.style.animationDuration = (0.7+Math.random()*.7)+'s';
+      b.style.height = (22+Math.random()*78)+'%';
+      eq.appendChild(b);
+    }
+  }
+
+  /* ---------- 全屏 ---------- */
+  function toggleFullscreen(){
+    if(!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }
+  document.getElementById('fs').addEventListener('click', toggleFullscreen);
+
+  /* ---------- 输入映射：滚轮（累积小增量，兼容触控板） ---------- */
+  let wheelAcc = 0, wheelReset = null;
+  window.addEventListener('wheel', e=>{
+    const d = e.deltaY * (e.deltaMode===1 ? 16 : 1);
+    const dir = d > 0 ? 1 : -1;
+    if(canScroll(slides[cur], dir)) return;   /* 小屏页内还有内容可滚 */
+    e.preventDefault();
+    wheelAcc += d;
+    if(wheelReset) clearTimeout(wheelReset);
+    if(Math.abs(wheelAcc) > 45){
+      const dd = wheelAcc > 0 ? 1 : -1;
+      wheelAcc = 0;
+      dd > 0 ? next() : prev();
+    }
+    wheelReset = setTimeout(()=>{ wheelAcc = 0; }, 220);
+  }, {passive:false});
+
+  /* ---------- 按钮 & 屏幕两侧点击区 ---------- */
+  document.getElementById('btnNext').addEventListener('click', next);
+  document.getElementById('btnPrev').addEventListener('click', prev);
+  document.getElementById('tapR').addEventListener('click', next);
+  document.getElementById('tapL').addEventListener('click', prev);
+
+  /* ---------- 触摸滑动 ---------- */
+  let ty = 0, tx = 0;
+  window.addEventListener('touchstart', e=>{
+    ty = e.touches[0].clientY; tx = e.touches[0].clientX;
+  }, {passive:true});
+  window.addEventListener('touchend', e=>{
+    const dy = e.changedTouches[0].clientY - ty;
+    const dx = e.changedTouches[0].clientX - tx;
+    if(Math.abs(dy) < 50 || Math.abs(dy) < Math.abs(dx)) return;
+    const dir = dy < 0 ? 1 : -1;
+    if(canScroll(slides[cur], dir)) return;
+    dir > 0 ? next() : prev();
+  }, {passive:true});
+
+  /* ---------- 键盘 ---------- */
+  window.addEventListener('keydown', e=>{
+    if(e.key==='f' || e.key==='F'){ e.preventDefault(); toggleFullscreen(); return; }
+    if(['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowUp','ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); jumpTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); jumpTo(total-1); }
+  });
+
+  /* ---------- 初始化：支持 #sN 直达 ---------- */
+  const m = location.hash.match(/^#s(\d+)$/);
+  const start = m ? Math.min(total-1, Math.max(0, +m[1]-1)) : 0;
+  slides[start].classList.add('active');
+  if(fx) fx.activate(slides[start]);
+  updateUI(start);
+  cur = start;
+  if(start===0) setTimeout(runCounters, 400);
+  window._goSlide = goTo;
+})();
+</script>
+</body>
+</html>
